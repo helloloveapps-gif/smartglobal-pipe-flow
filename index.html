@@ -37,6 +37,14 @@ svg .ed.on{stroke:var(--ink)!important;stroke-width:5}
 .nd.sale circle{fill:var(--ink)!important;stroke:var(--ink)!important}
 .nd.sale text.n{fill:#fff}
 .tag{font-size:13px;font-weight:700}
+.zoom{position:sticky;top:0;z-index:5;display:flex;gap:6px;align-items:center;padding:8px 0;background:var(--paper)}
+.zoom button{font:inherit;font-size:16px;min-width:44px;height:36px;padding:0 12px;border:1.5px solid var(--ink);background:var(--card);color:var(--ink);border-radius:8px;cursor:pointer}
+#zl{color:var(--mute);font-size:13px;margin-left:4px}
+svg#tree{display:block}
+@media (max-width:640px){
+  main{padding:14px 12px 32px} h1{font-size:17px} p.sub{font-size:13px}
+  .box{padding:10px} .chip{min-width:0;flex:1 1 45%;padding:6px 8px;font-size:12px} .chip b{font-size:15px}
+}
 </style>
 </head>
 <body>
@@ -45,6 +53,7 @@ svg .ed.on{stroke:var(--ink)!important;stroke-width:5}
 <p class="sub">손글씨 보상플랜 그림을 가상 회원번호로 옮겼다. 추천인은 그림처럼 바로 위 자리 사람. 매출 1건 = 75,000원.<br>
 줄은 누군가의 오른쪽(B) 자리에서 시작해 왼쪽으로만 내려간다. 그 B 자리 바로 위 사람이 <b>발생자</b>(받지 않음) → 발생자의 추천인 <b style="color:var(--pipe)">파이프수당</b> → 그 추천인 <b style="color:var(--match)">매칭수당</b>, 25,000원씩.</p>
 <div class="box"><div id="info"><span class="hint">조직도의 동그라미를 누르세요.</span></div></div>
+<div class="zoom"><button id="zo" aria-label="줄이기">−</button><button id="zf">맞춤</button><button id="zi" aria-label="키우기">+</button><span id="zl">맞춤</span></div>
 <div class="box scroll"><svg id="tree" role="img" aria-label="수당 흐름 조직도"></svg></div>
 </main>
 <script>
@@ -85,7 +94,20 @@ P["U.2.2"] = {x: me.x - 200, y: me.y - 70}; P["U.2"] = {x: me.x - 400, y: me.y -
 const maxD = Math.max(...locs.map(depth));
 const svgW = X0*2 + 8*W, svgH = Y0 + maxD*H + 70;
 const svg = document.getElementById("tree");
-svg.setAttribute("viewBox", `0 0 ${svgW} ${svgH}`); svg.style.minWidth = svgW + "px";
+svg.setAttribute("viewBox", `0 0 ${svgW} ${svgH}`);
+/* 크기 : 맞춤(화면 너비) 이 기본, − + 로 줄이고 키운다 */
+let zoom = 0;	// 0 = 맞춤
+const box = svg.parentElement, zl = document.getElementById("zl");
+function applyZoom(){
+  const fit = box.clientWidth - 32;
+  const w = zoom ? Math.round(svgW * zoom) : Math.min(fit, svgW);
+  svg.style.width = w + "px"; svg.style.height = Math.round(w * svgH / svgW) + "px";
+  zl.textContent = zoom ? Math.round(zoom * 100) + "%" : "맞춤";
+}
+document.getElementById("zo").onclick = () => { zoom = Math.max(0.2, (zoom || (box.clientWidth - 32) / svgW) - 0.15); applyZoom(); };
+document.getElementById("zi").onclick = () => { zoom = Math.min(2, (zoom || (box.clientWidth - 32) / svgW) + 0.15); applyZoom(); };
+document.getElementById("zf").onclick = () => { zoom = 0; applyZoom(); };
+window.addEventListener("resize", () => { if (!zoom) applyZoom(); });
 const el = (t,a,i="") => `<${t} ${Object.entries(a).map(([k,v])=>`${k}="${v}"`).join(" ")}>${i}</${t}>`;
 let out = "";
 Object.keys(ALL).forEach(L => { const p = par(L); if (!p) return;
@@ -133,6 +155,7 @@ function pick(L){
   info.innerHTML = html;
 }
 svg.querySelectorAll(".nd").forEach(g => g.addEventListener("click", () => pick(g.dataset.l)));
+applyZoom();
 </script>
 </body>
 </html>
